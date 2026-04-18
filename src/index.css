@@ -1,0 +1,33 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-bg: #F0F2F5;
+  --color-brand-sidebar: #0A192F;
+  --color-brand-sidebar-hover: #172A45;
+  --color-brand-accent: #2196F3;
+  --color-brand-ink: #1C1E21;
+  --color-brand-line: #D1D5DB;
+  --color-brand-success: #2E7D32;
+  --color-brand-error: #D32F2F;
+  --color-brand-warning: #ED6C02;
+  
+  --font-mono: 'Courier New', Courier, monospace;
+  --font-sans: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+@layer utilities {
+  @media print {
+    .no-print {
+      display: none !important;
+    }
+    aside {
+      display: none !important;
+    }
+    header {
+      display: none !important;
+    }
+    main {
+      padding: 0 !important;
+    }
+  }
+}

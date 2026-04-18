@@ -1,0 +1,84 @@
+// ===============================================================
+// Assumed Data Model
+// ===============================================================
+//
+// Collection: tenders
+// Document ID: {tenderId}
+// Fields:
+//   - title: string (required)
+//   - description: string
+//   - organization: string
+//   - status: string (draft|active|evaluated)
+//   - criteria: array of objects {id, title, description, type, isMandatory}
+//   - createdAt: string (date-time)
+//   - createdBy: string (uid)
+//
+// Collection: bidders
+// Document ID: {bidderId}
+// Fields:
+//   - tenderId: string (required)
+//   - companyName: string (required)
+//   - status: string (eligible|not-eligible|review|pending)
+//   - evaluations: map of criterionId -> {status, valueExtracted, evidence, documentRef, reason}
+//   - submittedAt: string (date-time)
+//
+// ===============================================================
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && 
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+         (request.auth.token.email == "devishwas5@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isValidTender(data) {
+      return data.title is string && data.title.size() > 0 && data.title.size() < 200 &&
+             data.status in ['draft', 'active', 'evaluated'] &&
+             data.criteria is list &&
+             data.createdAt is string;
+    }
+
+    function isValidBidder(data) {
+      return data.tenderId is string &&
+             data.companyName is string && data.companyName.size() > 0 && data.companyName.size() < 200 &&
+             data.status in ['eligible', 'not-eligible', 'review', 'pending'] &&
+             data.submittedAt is string;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      allow read: if isAuthenticated() && request.auth.uid == userId;
+      allow write: if isAdmin();
+    }
+
+    match /tenders/{tenderId} {
+      // Officers can read and manage tenders
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidTender(request.resource.data);
+      allow update: if isAuthenticated() && isValidTender(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /bidders/{bidderId} {
+      // Officers can read and manage bidder submissions
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidBidder(request.resource.data);
+      allow update: if isAuthenticated() && isValidBidder(request.resource.data);
+      allow delete: if isAdmin();
+    }
+  }
+}

@@ -1,0 +1,70 @@
+{
+  "entities": {
+    "Tender": {
+      "title": "Tender",
+      "description": "Represents a procurement tender with extracted eligibility criteria.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "description": "The title of the tender." },
+        "description": { "type": "string", "description": "General description of the tender." },
+        "organization": { "type": "string", "description": "The issuing organization, e.g., CRPF." },
+        "status": { "type": "string", "enum": ["draft", "active", "evaluated"], "description": "Current state of the tender." },
+        "criteria": {
+          "type": "array",
+          "description": "The extracted eligibility criteria from the tender document.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "title": { "type": "string" },
+              "description": { "type": "string" },
+              "type": { "type": "string", "enum": ["technical", "financial", "compliance"] },
+              "isMandatory": { "type": "boolean" }
+            }
+          }
+        },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "createdBy": { "type": "string", "description": "UID of the officer who created/uploaded it." }
+      },
+      "required": ["title", "status", "criteria", "createdAt"]
+    },
+    "Bidder": {
+      "title": "BidderSubmission",
+      "description": "Represents a bidder's response and its AI-evaluated status.",
+      "type": "object",
+      "properties": {
+        "tenderId": { "type": "string", "description": "Reference to the Tender ID." },
+        "companyName": { "type": "string" },
+        "status": { "type": "string", "enum": ["eligible", "not-eligible", "review", "pending"], "description": "Overall eligibility status." },
+        "evaluations": {
+          "type": "object",
+          "description": "Map of criterion ID to evaluation result.",
+          "properties": {
+            "evaluationResult": {
+              "type": "object",
+              "properties": {
+                "status": { "type": "string", "enum": ["eligible", "not-eligible", "review"] },
+                "valueExtracted": { "type": "string", "description": "The specific value found in bidder docs." },
+                "evidence": { "type": "string", "description": "Excerpt or summary of evidence." },
+                "documentRef": { "type": "string", "description": "Name of the source document." },
+                "reason": { "type": "string", "description": "Explanation for the verdict." }
+              }
+            }
+          }
+        },
+        "submittedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["tenderId", "companyName", "status", "submittedAt"]
+    }
+  },
+  "firestore": {
+    "tenders/{tenderId}": {
+      "schema": "Tender",
+      "description": "Collection of tender original definitions."
+    },
+    "bidders/{bidderId}": {
+      "schema": "Bidder",
+      "description": "Collection of bidder submissions and evaluations."
+    }
+  }
+}
